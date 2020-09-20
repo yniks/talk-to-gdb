@@ -1,0 +1,27 @@
+{
+  "name": "talk-to-gdb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "js/index.js",
+  "types": "js/*",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "repl": "node --experimental-repl-await --inspect=0.0.0.0",
+    "docify": "typedoc --out docs  --theme node_modules/typedoc-clarity-theme/bin"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "callback-to-generator": "git+https://github.com/yniks/callback-to-generator.git",
+    "execa": "^4.0.3",
+    "gdb-parser-extended": "git+ssh://git@github.com/yniks/gdb-parser-extended.git",
+    "object-pattern-match": "git+ssh://git@github.com/yniks/object-pattern-match.git"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.11.5",
+    "@types/node": "^14.10.1",
+    "jsdoc": "^3.6.5",
+    "ts-node": "^9.0.0",
+    "typedoc-clarity-theme": "^1.1.0"
+  }
+}

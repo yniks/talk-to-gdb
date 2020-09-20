@@ -1,0 +1,36 @@
+//@ts-check
+const path=require('path')
+/**
+ * Class which can  initiate gdb instance, is used optionally, 
+ * when talk2gdb Class is initialized without a user provided gdb instance.
+ * @property { string } targetpath - Path of the debugee with which gdb instance has to initiated
+ * @property { string } cwd - `Current working directory` of the gdb process
+ * @property {ChildProcess} process - gdb process instance
+ * @requires execa
+ */
+class GdbInstance
+{
+    /**
+     * @param {string} [targetpath] - Path of the debugee with which gdb instance has to initiated
+     * @param {string} [cwd] - `Current working directory` of the gdb process
+     */
+    constructor(targetpath="",cwd)
+    {
+        var execa=require('execa')
+        this.targetpath=targetpath?path.basename(targetpath):''
+        this.cwd=cwd||path.dirname(targetpath)
+        this.process=execa('gdb',['-q','-i=mi2',this.targetpath],{cwd:this.cwd})
+    }
+}
+var r=new GdbInstance()
+r.process
+/**
+ *  Class which manages gdb instances, communication and parsing of gdb output
+ */
+class talk2gdb
+{
+    constructor(gdbinstance)
+    {
+
+    }
+}
