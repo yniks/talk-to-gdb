@@ -1,8 +1,8 @@
 import execa from "execa"
 import path from "path"
-import { GdbParser } from "parse-gdb"
+import { GdbParser } from "gdb-parser-extended"
 import { ChildProcess } from "child_process"
-import { EventEmitterExtended } from "./extended-events"
+import { EventEmitterExtended } from "listen-for-patterns"
 
 /**
  * This Class initiates and loads gdb process.
@@ -13,6 +13,7 @@ export class GdbInstance {
     public cwd?: string
     public process: execa.ExecaChildProcess
     constructor(targetpath: string = "", cwd?: string) {
+        //FIXME: varify this.does setting targetpath as an empty string have any uninteded sideeffect
         this.targetpath = targetpath ? path.basename(targetpath) : ''
         this.cwd = cwd || path.dirname(targetpath)
         this.process = execa('gdb', ['-q', '-i=mi3', this.targetpath], { cwd: this.cwd })
@@ -23,14 +24,15 @@ export class GdbInstance {
  */
 export class TalkToGdb extends EventEmitterExtended {
     #process:ChildProcess
-    #parser=new GdbParser
+    #parser:GdbParser
     constructor({runninggdb,target}: {runninggdb?: ChildProcess, target?:{path:string,cwd:string}}) {
             super({captureRejections:true})
             if (typeof runninggdb=="undefined"){
                 this.#process =new GdbInstance(target?.path ,target?.cwd).process
             }
             else this.#process=runninggdb
-            var tail:string="";
+            this.#parser=new GdbParser
+            var tail="";
             this.#process.stdout?.setEncoding("utf-8").on("data",(data:string)=>
             {
                 var lines=(tail+data).split(/([^\n]*?\n)/g)
