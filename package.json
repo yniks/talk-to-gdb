@@ -15,6 +15,7 @@
     "callback-to-generator": "git+https://github.com/yniks/callback-to-generator.git",
     "execa": "^4.0.3",
     "gdb-parser-extended": "git+ssh://git@github.com/yniks/gdb-parser-extended.git",
+    "listen-for-patterns": "git+ssh://git@github.com/yniks/listen-for-patterns.git",
     "object-pattern-match": "git+ssh://git@github.com/yniks/object-pattern-match.git"
   },
   "devDependencies": {
