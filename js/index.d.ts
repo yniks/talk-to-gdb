@@ -7,17 +7,17 @@ import { EventEmitterExtended, pattern } from "listen-for-patterns";
  * This is required only when the user does not provide a running gdb process in `TalkToGdb` constructor
  */
 export declare class GdbInstance {
-    file: string;
-    cwd: string;
+    file: string | undefined;
+    cwd: string | undefined;
     process: execa.ExecaChildProcess;
-    constructor(file: string, cwd?: string);
+    constructor(file?: string, cwd?: string);
 }
 /**
  * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */
 export declare class TalkToGdb extends EventEmitterExtended {
     #private;
-    constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {
+    constructor(arg?: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | {
         target: string | {
             file: string;
             cwd?: string;

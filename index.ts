@@ -9,13 +9,22 @@ import {EventToGenerator } from "callback-to-generator"
  * This is required only when the user does not provide a running gdb process in `TalkToGdb` constructor
  */
 export class GdbInstance {
-    public file: string
-    public cwd: string
+    public file: string|undefined
+    public cwd: string|undefined
     public process: execa.ExecaChildProcess
-    constructor(file: string , cwd?: string) {
-        this.file = file
-        this.cwd = cwd || path.dirname(file)
-        this.process = execa('gdb', ['-q', '-i=mi3', this.file], { cwd: this.cwd })
+    constructor(file?: string , cwd?: string) {
+       if (file)
+       {
+            this.file = file
+            this.cwd = cwd || path.dirname(file)
+            this.process = execa('gdb', ['-q', '-i=mi3', this.file], { cwd: this.cwd })
+       }
+       else if (cwd)
+            {
+                this.cwd = cwd 
+                this.process = execa('gdb', ['-q', '-i=mi3'], { cwd: this.cwd })
+            }
+       else  this.process = execa('gdb', ['-q', '-i=mi3'])
     }
 }
 /**
@@ -24,7 +33,7 @@ export class GdbInstance {
 export class TalkToGdb extends EventEmitterExtended {
     #process:ChildProcessWithoutNullStreams|execa.ExecaChildProcess
     #parser:GdbParser
-    constructor(arg: ChildProcessWithoutNullStreams|execa.ExecaChildProcess|{ target:string|{file:string,cwd?:string}}) {
+    constructor(arg: ChildProcessWithoutNullStreams|execa.ExecaChildProcess|{}|{ target:string|{file:string,cwd?:string}}={}) {
             super()
             if ("stdout" in arg ){
                 if (!arg.stdout)throw "Need a Child Process with an open stdio stream"
@@ -36,7 +45,7 @@ export class TalkToGdb extends EventEmitterExtended {
                     this.#process =new GdbInstance(arg.target).process 
                 else this.#process =new GdbInstance(arg.target.file ,arg.target.cwd).process
             }
-            else throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
+            else  this.#process =new GdbInstance().process //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
             this.#parser=new GdbParser
             var tail="";
             this.#process.stdout?.setEncoding("utf-8").on("data",(data:string)=>

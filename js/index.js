@@ -15,9 +15,17 @@ const callback_to_generator_1 = require("callback-to-generator");
  */
 class GdbInstance {
     constructor(file, cwd) {
-        this.file = file;
-        this.cwd = cwd || path_1.default.dirname(file);
-        this.process = execa_1.default('gdb', ['-q', '-i=mi3', this.file], { cwd: this.cwd });
+        if (file) {
+            this.file = file;
+            this.cwd = cwd || path_1.default.dirname(file);
+            this.process = execa_1.default('gdb', ['-q', '-i=mi3', this.file], { cwd: this.cwd });
+        }
+        else if (cwd) {
+            this.cwd = cwd;
+            this.process = execa_1.default('gdb', ['-q', '-i=mi3'], { cwd: this.cwd });
+        }
+        else
+            this.process = execa_1.default('gdb', ['-q', '-i=mi3']);
     }
 }
 exports.GdbInstance = GdbInstance;
@@ -25,7 +33,7 @@ exports.GdbInstance = GdbInstance;
  * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */
 class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
-    constructor(arg) {
+    constructor(arg = {}) {
         super();
         if ("stdout" in arg) {
             if (!arg.stdout)
@@ -39,7 +47,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
                 this.#process = new GdbInstance(arg.target.file, arg.target.cwd).process;
         }
         else
-            throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled";
+            this.#process = new GdbInstance().process; //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
         this.#parser = new gdb_parser_extended_1.GdbParser;
         var tail = "";
         this.#process.stdout?.setEncoding("utf-8").on("data", (data) => {
