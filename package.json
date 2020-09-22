@@ -15,13 +15,12 @@
     "callback-to-generator": "git+https://github.com/yniks/callback-to-generator.git",
     "execa": "^4.0.3",
     "gdb-parser-extended": "git+ssh://git@github.com/yniks/gdb-parser-extended.git",
-    "listen-for-patterns": "git+ssh://git@github.com/yniks/listen-for-patterns.git",
-    "object-pattern-match": "git+ssh://git@github.com/yniks/object-pattern-match.git"
+    "listen-for-patterns": "git+ssh://git@github.com/yniks/listen-for-patterns.git"
   },
   "devDependencies": {
     "@babel/types": "^7.11.5",
-    "@types/node": "^14.10.1",
-    "jsdoc": "^3.6.5",
+    "@types/node": "^14.11.1",
+    "jsdoc": "^3.6.6",
     "ts-node": "^9.0.0",
     "typedoc-clarity-theme": "^1.1.0"
   }

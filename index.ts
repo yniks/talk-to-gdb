@@ -2,8 +2,8 @@ import execa from "execa"
 import path from "path"
 import { GdbParser } from "gdb-parser-extended"
 import { ChildProcess } from "child_process"
-import { EventEmitterExtended } from "listen-for-patterns"
-
+import { EventEmitterExtended,pattern } from "listen-for-patterns"
+import {EventToGenerator } from "callback-to-generator"
 /**
  * This Class initiates and loads gdb process.
  * This is needed only when the user does not provide a runnin gdb process in `Talk2Gdb` constructor
@@ -26,7 +26,7 @@ export class TalkToGdb extends EventEmitterExtended {
     #process:ChildProcess
     #parser:GdbParser
     constructor({runninggdb,target}: {runninggdb?: ChildProcess, target?:{path:string,cwd:string}}) {
-            super({captureRejections:true})
+            super()
             if (typeof runninggdb=="undefined"){
                 this.#process =new GdbInstance(target?.path ,target?.cwd).process
             }
@@ -44,15 +44,17 @@ export class TalkToGdb extends EventEmitterExtended {
                 this.emit(miresponse)
             })  
     }
-    async writeln(input:string):Promise<boolean>
+    writeln(input:string):Promise<boolean>
     {
            return new Promise((res,rej)=>{
                 this.#process.stdin?.write(input,(error)=>error?rej(error):res(true))
            })
     }
-    async readline()
+    readln(pattern?:pattern):AsyncIterable<any>
     {
-        
+        var stream=new EventToGenerator() 
+        this.addListener(pattern||'line',stream as Function as (...args: any[]) => void)
+        return stream
     }
 }
 
