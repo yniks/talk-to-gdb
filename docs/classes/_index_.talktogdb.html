@@ -990,7 +990,7 @@ img { max-width: 100%; }
 		<section class="tsd-panel tsd-comment">
 			<div class="tsd-comment tsd-typography">
 				<div class="lead">
-					<p>Primary Class which implements mechanism to initiate, and communicate with gdb</p>
+					<p>Primary Class which implements mechanisms to initiate, and communicate with gdb</p>
 				</div>
 			</div>
 		</section>
@@ -1056,28 +1056,20 @@ img { max-width: 100%; }
 				<a name="constructor" class="tsd-anchor"></a>
 				<h3>constructor</h3>
 				<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
-					<li class="tsd-signature tsd-kind-icon">new <wbr>Talk<wbr>ToGdb<span class="tsd-signature-symbol">(</span>__namedParameters<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_index_.talktogdb.html" class="tsd-signature-type">TalkToGdb</a></li>
+					<li class="tsd-signature tsd-kind-icon">new <wbr>Talk<wbr>ToGdb<span class="tsd-signature-symbol">(</span>arg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ChildProcessWithoutNullStreams</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">execa.ExecaChildProcess</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_index_.talktogdb.html" class="tsd-signature-type">TalkToGdb</a></li>
 				</ul>
 				<ul class="tsd-descriptions">
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<p>Overrides EventEmitterExtended.__constructor</p>
 							<ul>
-								<li>Defined in index.ts:27</li>
+								<li>Defined in index.ts:26</li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
 						<ul class="tsd-parameters">
 							<li>
-								<h5>__namedParameters: <span class="tsd-signature-type">object</span></h5>
-								<ul class="tsd-parameters">
-									<li class="tsd-parameter">
-										<h5>runninggdb<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ChildProcess</span></h5>
-									</li>
-									<li class="tsd-parameter">
-										<h5>target<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></h5>
-									</li>
-								</ul>
+								<h5>arg: <span class="tsd-signature-type">ChildProcessWithoutNullStreams</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">execa.ExecaChildProcess</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></h5>
 							</li>
 						</ul>
 						<h4 class="tsd-returns-title">Returns <a href="_index_.talktogdb.html" class="tsd-signature-type">TalkToGdb</a></h4>
@@ -1093,17 +1085,17 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">#parser<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GdbParser</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in index.ts:27</li>
+						<li>Defined in index.ts:26</li>
 					</ul>
 				</aside>
 			</section>
 			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
 				<a name="_process" class="tsd-anchor"></a>
 				<h3><span class="tsd-flag ts-flagPrivate">Private</span> #process</h3>
-				<div class="tsd-signature tsd-kind-icon">#process<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ChildProcess</span></div>
+				<div class="tsd-signature tsd-kind-icon">#process<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ChildProcessWithoutNullStreams</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">execa.ExecaChildProcess</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in index.ts:26</li>
+						<li>Defined in index.ts:25</li>
 					</ul>
 				</aside>
 			</section>
@@ -1120,7 +1112,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in index.ts:53</li>
+								<li>Defined in index.ts:59</li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1143,7 +1135,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in index.ts:47</li>
+								<li>Defined in index.ts:53</li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>

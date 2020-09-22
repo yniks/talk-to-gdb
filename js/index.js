@@ -11,28 +11,35 @@ const listen_for_patterns_1 = require("listen-for-patterns");
 const callback_to_generator_1 = require("callback-to-generator");
 /**
  * This Class initiates and loads gdb process.
- * This is needed only when the user does not provide a runnin gdb process in `Talk2Gdb` constructor
+ * This is required only when the user does not provide a running gdb process in `TalkToGdb` constructor
  */
 class GdbInstance {
-    constructor(targetpath = "", cwd) {
-        //FIXME: varify this.does setting targetpath as an empty string have any uninteded sideeffect
-        this.targetpath = targetpath ? path_1.default.basename(targetpath) : '';
-        this.cwd = cwd || path_1.default.dirname(targetpath);
-        this.process = execa_1.default('gdb', ['-q', '-i=mi3', this.targetpath], { cwd: this.cwd });
+    constructor(file, cwd) {
+        this.file = file;
+        this.cwd = cwd || path_1.default.dirname(file);
+        this.process = execa_1.default('gdb', ['-q', '-i=mi3', this.file], { cwd: this.cwd });
     }
 }
 exports.GdbInstance = GdbInstance;
 /**
- * Primary Class which implements mechanism to initiate, and communicate with gdb
+ * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */
 class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
-    constructor({ runninggdb, target }) {
+    constructor(arg) {
         super();
-        if (typeof runninggdb == "undefined") {
-            this.#process = new GdbInstance(target?.path, target?.cwd).process;
+        if ("stdout" in arg) {
+            if (!arg.stdout)
+                throw "Need a Child Process with an open stdio stream";
+            this.#process = arg;
+        }
+        else if ("target" in arg) {
+            if (typeof arg.target == "string")
+                this.#process = new GdbInstance(arg.target).process;
+            else
+                this.#process = new GdbInstance(arg.target.file, arg.target.cwd).process;
         }
         else
-            this.#process = runninggdb;
+            throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled";
         this.#parser = new gdb_parser_extended_1.GdbParser;
         var tail = "";
         this.#process.stdout?.setEncoding("utf-8").on("data", (data) => {
