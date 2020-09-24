@@ -9,10 +9,6 @@ const path_1 = __importDefault(require("path"));
 const gdb_parser_extended_1 = require("gdb-parser-extended");
 const listen_for_patterns_1 = require("listen-for-patterns");
 const callback_to_generator_1 = require("callback-to-generator");
-/**
- * This Class initiates and loads gdb process.
- * This is required only when the user does not provide a running gdb process in `TalkToGdb` constructor
- */
 class GdbInstance {
     constructor(file, cwd) {
         if (file) {
@@ -56,15 +52,20 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
             lines.forEach((element) => element && this.emit('line', element));
         });
         this.on('line', (line) => {
-            var miresponse = this.#parser.parseMIrecord(line);
+            var miresponse = Object.assign(this.#parser.parseMIrecord(line), { msgid: this.#inMsgCounter++, seqid: this.#inSeqNumber });
             this.emit(miresponse);
         });
+        this.addListener({ type: 'sequencebreak' }, () => this.#inSeqNumber++);
+        this.#outMsgCounter = this.#inMsgCounter = this.#inSeqNumber = 0;
     }
+    #inMsgCounter;
+    #outMsgCounter;
+    #inSeqNumber;
     #process;
     #parser;
     write(input) {
         return new Promise((res, rej) => {
-            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(true));
+            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(this.#outMsgCounter++));
         });
     }
     read(pattern) {
@@ -76,6 +77,9 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         var stream = new callback_to_generator_1.EventToGenerator();
         this.untill(pattern || 'line', untill, stream);
         return stream;
+    }
+    readSequence(seq, pattern = {}) {
+        return this.readUntill(Object.assign(pattern, { seqid: seq }), { seqid: seq + 1 });
     }
 }
 exports.TalkToGdb = TalkToGdb;

@@ -8,6 +8,12 @@ import {EventToGenerator } from "callback-to-generator"
  * This Class initiates and loads gdb process.
  * This is required only when the user does not provide a running gdb process in `TalkToGdb` constructor
  */
+interface Flavoring<FlavorT> {
+    _type?: FlavorT;
+  }
+export type Nominal<T, FlavorT> = T & Flavoring<FlavorT>;
+type messageCounter=Nominal<number,"messageCounter">
+type sequenceCounter=Nominal<number,"sequenceCounter">
 export class GdbInstance {
     public file: string|undefined
     public cwd: string|undefined
@@ -31,6 +37,9 @@ export class GdbInstance {
  * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */
 export class TalkToGdb extends EventEmitterExtended {
+    #inMsgCounter:messageCounter
+    #outMsgCounter:messageCounter
+    #inSeqNumber:messageCounter
     #process:ChildProcessWithoutNullStreams|execa.ExecaChildProcess
     #parser:GdbParser
     constructor(arg: ChildProcessWithoutNullStreams|execa.ExecaChildProcess|{}|{ target:string|{file:string,cwd?:string}}={}) {
@@ -55,14 +64,16 @@ export class TalkToGdb extends EventEmitterExtended {
                 lines.forEach((element) => element&&this.emit('line',element) );
             })
             this.on('line',(line)=>{
-                var miresponse=this.#parser.parseMIrecord(line)
+                var miresponse=Object.assign(this.#parser.parseMIrecord(line),{msgid:this.#inMsgCounter++,seqid:this.#inSeqNumber})
                 this.emit(miresponse)
-            })  
+            })
+            this.addListener({ type:'sequencebreak'},()=>this.#inSeqNumber++)
+            this.#outMsgCounter=this.#inMsgCounter=this.#inSeqNumber=0
     }
-    write(input:string):Promise<boolean>
-    {
+    write(input:string):Promise<messageCounter>
+    {       
            return new Promise((res,rej)=>{
-                this.#process.stdin?.write(input,(error)=>error?rej(error):res(true))
+                this.#process.stdin?.write(input,(error)=>error?rej(error):res(this.#outMsgCounter++))
            })
     }
     read(pattern?:pattern):AsyncIterable<any>
@@ -76,6 +87,10 @@ export class TalkToGdb extends EventEmitterExtended {
         var stream=new EventToGenerator() 
         this.untill(pattern||'line',untill,stream as Function as (...args: any[]) => void)
         return stream
+    }
+    readSequence(seq:messageCounter,pattern:pattern={})
+    {
+        return this.readUntill(Object.assign(pattern,{seqid:seq}),{seqid:seq+1})
     }
 }
 
