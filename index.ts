@@ -73,7 +73,7 @@ export class TalkToGdb extends EventEmitterExtended {
     write(input:string):Promise<messageCounter>
     {       
            return new Promise((res,rej)=>{
-                this.#process.stdin?.write(input,(error)=>error?rej(error):res(this.#outMsgCounter++))
+                this.#process.stdin?.write(input,(error)=>error?rej(error):res(Math.max(this.#inSeqNumber,this.#outMsgCounter++)))
            })
     }
     read(pattern?:pattern):AsyncIterable<any>

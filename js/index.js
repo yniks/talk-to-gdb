@@ -65,7 +65,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     #parser;
     write(input) {
         return new Promise((res, rej) => {
-            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(this.#outMsgCounter++));
+            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Math.max(this.#inSeqNumber, this.#outMsgCounter++)));
         });
     }
     read(pattern) {
