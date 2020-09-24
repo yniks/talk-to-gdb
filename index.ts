@@ -85,7 +85,7 @@ export class TalkToGdb extends EventEmitterExtended {
     readUntill(pattern?:pattern,untill:pattern={ type:'sequencebreak'}):AsyncIterable<any>
     {
         var stream=new EventToGenerator() 
-        this.untill(pattern||'line',untill,stream as Function as (...args: any[]) => void)
+        this.untill(pattern||'line',untill,stream as Function as (...args: any[]) => void,()=>stream(null))
         return stream
     }
     readSequence(seq:messageCounter,pattern:pattern={})

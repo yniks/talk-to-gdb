@@ -75,7 +75,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     }
     readUntill(pattern, untill = { type: 'sequencebreak' }) {
         var stream = new callback_to_generator_1.EventToGenerator();
-        this.untill(pattern || 'line', untill, stream);
+        this.untill(pattern || 'line', untill, stream, () => stream(null));
         return stream;
     }
     readSequence(seq, pattern = {}) {
