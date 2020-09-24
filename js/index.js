@@ -62,14 +62,19 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     }
     #process;
     #parser;
-    writeln(input) {
+    write(input) {
         return new Promise((res, rej) => {
             this.#process.stdin?.write(input, (error) => error ? rej(error) : res(true));
         });
     }
-    readln(pattern) {
+    read(pattern) {
         var stream = new callback_to_generator_1.EventToGenerator();
         this.addListener(pattern || 'line', stream);
+        return stream;
+    }
+    readUntill(pattern, untill = { type: 'sequencebreak' }) {
+        var stream = new callback_to_generator_1.EventToGenerator();
+        this.untill(pattern || 'line', untill, stream);
         return stream;
     }
 }

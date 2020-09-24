@@ -23,7 +23,8 @@ export declare class TalkToGdb extends EventEmitterExtended {
             cwd?: string;
         };
     });
-    writeln(input: string): Promise<boolean>;
-    readln(pattern?: pattern): AsyncIterable<any>;
+    write(input: string): Promise<boolean>;
+    read(pattern?: pattern): AsyncIterable<any>;
+    readUntill(pattern?: pattern, untill?: pattern): AsyncIterable<any>;
 }
 //# sourceMappingURL=index.d.ts.map

@@ -59,16 +59,22 @@ export class TalkToGdb extends EventEmitterExtended {
                 this.emit(miresponse)
             })  
     }
-    writeln(input:string):Promise<boolean>
+    write(input:string):Promise<boolean>
     {
            return new Promise((res,rej)=>{
                 this.#process.stdin?.write(input,(error)=>error?rej(error):res(true))
            })
     }
-    readln(pattern?:pattern):AsyncIterable<any>
+    read(pattern?:pattern):AsyncIterable<any>
     {
         var stream=new EventToGenerator() 
         this.addListener(pattern||'line',stream as Function as (...args: any[]) => void)
+        return stream
+    }
+    readUntill(pattern?:pattern,untill:pattern={ type:'sequencebreak'}):AsyncIterable<any>
+    {
+        var stream=new EventToGenerator() 
+        this.untill(pattern||'line',untill,stream as Function as (...args: any[]) => void)
         return stream
     }
 }
