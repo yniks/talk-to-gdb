@@ -79,7 +79,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         return stream;
     }
     readSequence(seq, pattern = {}) {
-        return this.readUntill(Object.assign(pattern, { seqid: seq }), { seqid: seq + 1 });
+        return this.readUntill(Object.assign(pattern, { seqid: seq }), { seqid: (n) => n > seq });
     }
 }
 exports.TalkToGdb = TalkToGdb;

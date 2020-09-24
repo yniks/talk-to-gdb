@@ -90,7 +90,7 @@ export class TalkToGdb extends EventEmitterExtended {
     }
     readSequence(seq:messageCounter,pattern:pattern={})
     {
-        return this.readUntill(Object.assign(pattern,{seqid:seq}),{seqid:seq+1})
+        return this.readUntill(Object.assign(pattern,{seqid:seq}),{seqid:(n:number)=>n>seq})
     }
 }
 
