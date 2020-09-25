@@ -61,9 +61,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         let sequenceToken = -1;
         let seqid = -1;
         this.addListener("object", (object) => {
-            if (this.listenerCount("sequence") == 0)
-                return;
-            else if (object.type == 'sequencebreak') {
+            if (object.type == 'sequencebreak') {
                 var data = Object.assign({ token: sequenceToken, seqid, type: 'sequence', messages: sequence });
                 this.emit(data);
                 this.emit("sequence", data);
@@ -73,11 +71,11 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
             }
             else {
                 if (object.token) {
-                    if (typeof sequenceToken == 'undefined')
+                    if (sequenceToken == -1)
                         sequenceToken = object.token;
                     //else if(object.token!=sequenceToken);console.error("WARN:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
                 }
-                if (seqid != -1 && object.seqid)
+                if (seqid == -1 && "seqid" in object)
                     seqid = object.seqid;
                 sequence.push(object);
             }
