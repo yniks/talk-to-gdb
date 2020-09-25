@@ -83,23 +83,30 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     #inSeqNumber;
     #process;
     #parser;
+    gettoken() {
+        return Math.random().toString().slice(2);
+    }
     write(input) {
+        var token = (input.match(/(\d*)-/) || [])[1];
+        if (token === "") {
+            token = this.gettoken();
+            input = token + input;
+        }
         return new Promise((res, rej) => {
-            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Math.max(this.#inSeqNumber, this.#outMsgCounter++)));
+            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)));
         });
     }
-    read(pattern) {
+    readPattern(pattern, untill) {
         var stream = new callback_to_generator_1.EventToGenerator();
-        this.addListener(pattern || 'line', stream);
-        return stream;
-    }
-    readUntill(pattern, untill = { type: 'sequencebreak' }) {
-        var stream = new callback_to_generator_1.EventToGenerator();
-        this.untill(pattern || 'line', untill, stream, () => stream(null));
+        if (untill) {
+            this.untill(pattern || 'object', untill, stream, () => stream(null));
+        }
+        else
+            this.addListener(pattern || 'object', stream);
         return stream;
     }
     readSequence(seq, pattern = {}) {
-        return this.readUntill(Object.assign(pattern, { seqid: seq }), { type: 'sequencebreak', seqid: seq });
+        // return this.readUntill(Object.assign(pattern, { seqid: seq }), { type: 'sequencebreak', seqid: seq })
     }
 }
 exports.TalkToGdb = TalkToGdb;

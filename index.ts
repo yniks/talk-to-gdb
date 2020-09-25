@@ -76,7 +76,9 @@ export class TalkToGdb extends EventEmitterExtended {
         this.addListener("object", (object) => {
             if(this.listenerCount("sequence")==0)return
             else if (object.type == 'sequencebreak') {
-                this.emit("sequence", Object.assign({ token: sequenceToken,type: 'sequence' , messages:sequence}))
+                var data=Object.assign({ token: sequenceToken,type: 'sequence' , messages:sequence})
+                this.emit(data)
+                this.emit("sequence", data)
                 sequence=[]
                 sequenceToken=undefined
             }
@@ -105,18 +107,22 @@ export class TalkToGdb extends EventEmitterExtended {
             this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)))
         })
     }
-    read(pattern?: pattern): AsyncIterable<any> {
+    readPattern(pattern: pattern='object', untill?: pattern ): AsyncIterable<any> {
         var stream = new EventToGenerator()
-        this.addListener(pattern || 'object', stream as Function as (...args: any[]) => void)
+        if(untill)
+        {
+            this.untill(pattern , untill, stream as Function as (...args: any[]) => void, () => stream(null))
+        }
+        else 
+            this.addListener(pattern , stream as Function as (...args: any[]) => void);
         return stream
     }
-    readUntill(pattern?: pattern, untill: pattern = { type: 'sequencebreak' }): AsyncIterable<any> {
-        var stream = new EventToGenerator()
-        this.untill(pattern || 'object', untill, stream as Function as (...args: any[]) => void, () => stream(null))
-        return stream
-    }
-    readSequence(seq: messageCounter, pattern: pattern = {}) {
-        return this.readUntill(Object.assign(pattern, { seqid: seq }), { type: 'sequencebreak', seqid: seq })
+    /**
+     * 
+     * @param pattern this pattern will be matched against the sequence object being emitted
+     */
+    readSequence(pattern: pattern='object', untill?: pattern ): AsyncIterable<any> {
+        return this.readPattern(Object.assign(pattern,{type:"sequence"}),untill)
     }
 }
 

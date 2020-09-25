@@ -22,6 +22,7 @@ export declare class GdbInstance {
  */
 export declare class TalkToGdb extends EventEmitterExtended {
     #private;
+    private gettoken;
     constructor(arg?: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | {
         target: string | {
             file: string;
@@ -29,9 +30,8 @@ export declare class TalkToGdb extends EventEmitterExtended {
         };
     });
     write(input: string): Promise<messageCounter>;
-    read(pattern?: pattern): AsyncIterable<any>;
-    readUntill(pattern?: pattern, untill?: pattern): AsyncIterable<any>;
-    readSequence(seq: messageCounter, pattern?: pattern): AsyncIterable<any>;
+    readPattern(pattern: pattern, untill?: pattern): AsyncIterable<any>;
+    readSequence(seq: messageCounter, pattern?: pattern): void;
 }
 export {};
 //# sourceMappingURL=index.d.ts.map
