@@ -107,12 +107,12 @@ export class TalkToGdb extends EventEmitterExtended {
     }
     read(pattern?: pattern): AsyncIterable<any> {
         var stream = new EventToGenerator()
-        this.addListener(pattern || 'line', stream as Function as (...args: any[]) => void)
+        this.addListener(pattern || 'object', stream as Function as (...args: any[]) => void)
         return stream
     }
     readUntill(pattern?: pattern, untill: pattern = { type: 'sequencebreak' }): AsyncIterable<any> {
         var stream = new EventToGenerator()
-        this.untill(pattern || 'line', untill, stream as Function as (...args: any[]) => void, () => stream(null))
+        this.untill(pattern || 'object', untill, stream as Function as (...args: any[]) => void, () => stream(null))
         return stream
     }
     readSequence(seq: messageCounter, pattern: pattern = {}) {
