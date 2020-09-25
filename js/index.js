@@ -58,21 +58,27 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         });
         this.addListener({ type: 'sequencebreak' }, () => this.#inSeqNumber++);
         let sequence = [];
-        let sequenceToken;
+        let sequenceToken = -1;
+        let seqid = -1;
         this.addListener("object", (object) => {
             if (this.listenerCount("sequence") == 0)
                 return;
             else if (object.type == 'sequencebreak') {
-                this.emit("sequence", Object.assign({ token: sequenceToken, type: 'sequence', messages: sequence }));
+                var data = Object.assign({ token: sequenceToken, seqid, type: 'sequence', messages: sequence });
+                this.emit(data);
+                this.emit("sequence", data);
                 sequence = [];
-                sequenceToken = undefined;
+                seqid = -1;
+                sequenceToken = -1;
             }
             else {
                 if (object.token) {
                     if (typeof sequenceToken == 'undefined')
                         sequenceToken = object.token;
-                    //else if(object.token!=sequenceToken);console.error("WARM:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
+                    //else if(object.token!=sequenceToken);console.error("WARN:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
                 }
+                if (seqid != -1 && object.seqid)
+                    seqid = object.seqid;
                 sequence.push(object);
             }
         });
@@ -86,6 +92,10 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     gettoken() {
         return Math.random().toString().slice(2);
     }
+    /**
+     * write to gdb stdin
+     * @param input gdbmi command
+     */
     write(input) {
         var token = (input.match(/(\d*)-/) || [])[1];
         if (token === "") {
@@ -96,17 +106,28 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
             this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)));
         });
     }
-    readPattern(pattern, untill) {
-        var stream = new callback_to_generator_1.EventToGenerator();
-        if (untill) {
-            this.untill(pattern || 'object', untill, stream, () => stream(null));
-        }
-        else
-            this.addListener(pattern || 'object', stream);
-        return stream;
+    async request(input) {
+        var token = await this.write(input);
+        return this.readPattern({ token, type: (s) => s != 'sequence' });
     }
-    readSequence(seq, pattern = {}) {
-        // return this.readUntill(Object.assign(pattern, { seqid: seq }), { type: 'sequencebreak', seqid: seq })
+    readPattern(pattern, untill = "once") {
+        if (untill == "once")
+            return new Promise(res => this.once(pattern, (data) => res(data)));
+        else {
+            var stream = new callback_to_generator_1.EventToGenerator();
+            if (untill !== 'forever') {
+                this.untill(pattern, untill, stream, () => stream(null));
+            }
+            else
+                this.addListener(pattern, stream);
+            return stream;
+        }
+    }
+    readSequence(pattern, untill = "once") {
+        if (typeof untill == 'object')
+            if ("seqid" in untill && untill.seqid < this.#inSeqNumber)
+                console.error("readSequence might be waiting for a message that might never arrive!");
+        return this.readPattern(Object.assign(pattern, { type: "sequence" }), untill);
     }
 }
 exports.TalkToGdb = TalkToGdb;

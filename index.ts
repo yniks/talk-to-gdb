@@ -72,15 +72,17 @@ export class TalkToGdb extends EventEmitterExtended {
         
         
         let sequence: Object[] = []
-        let sequenceToken: messageCounter|undefined;
+        let sequenceToken: messageCounter=-1
+        let seqid:messageCounter=-1
         this.addListener("object", (object) => {
             if(this.listenerCount("sequence")==0)return
             else if (object.type == 'sequencebreak') {
-                var data=Object.assign({ token: sequenceToken,type: 'sequence' , messages:sequence})
+                var data=Object.assign({ token: sequenceToken,seqid,type: 'sequence' , messages:sequence})
                 this.emit(data)
                 this.emit("sequence", data)
                 sequence=[]
-                sequenceToken=undefined
+                seqid=-1
+                sequenceToken=-1
             }
             else
             {
@@ -88,14 +90,19 @@ export class TalkToGdb extends EventEmitterExtended {
                 {
                     if(typeof sequenceToken=='undefined')
                         sequenceToken=object.token;
-                    //else if(object.token!=sequenceToken);console.error("WARM:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
+                    //else if(object.token!=sequenceToken);console.error("WARN:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
                 }
+                if(seqid!=-1 && object.seqid)seqid=object.seqid
                 sequence.push(object)
             }
         })
         this.#outMsgCounter = this.#inMsgCounter = this.#inSeqNumber = 0
 
     }
+    /**
+     * write to gdb stdin
+     * @param input gdbmi command
+     */
     write(input: string): Promise<messageCounter> {
         var token=(input.match(/(\d*)-/)||[])[1] as string|undefined
         if(token==="" )
@@ -107,21 +114,39 @@ export class TalkToGdb extends EventEmitterExtended {
             this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)))
         })
     }
-    readPattern(pattern: pattern='object', untill?: pattern ): AsyncIterable<any> {
-        var stream = new EventToGenerator()
-        if(untill)
-        {
-            this.untill(pattern , untill, stream as Function as (...args: any[]) => void, () => stream(null))
-        }
+    async request(input: string):Promise<any>
+    {
+        var token=await this.write(input);
+        return this.readPattern({token,type:(s:string)=>s!='sequence'})
+    }
+    readPattern(pattern: pattern, untill?:Nominal<"once",""> ):Promise<any>
+    readPattern(pattern:pattern,untill:Nominal<"forever","">|pattern): AsyncIterable<any> 
+    readPattern(pattern: pattern, untill: Nominal<"forever","">|Nominal<"once","">|pattern="once" ):Promise<any>|AsyncIterable<any>
+    {
+        if(untill=="once") 
+            return new Promise(res =>this.once(pattern,(data)=>res(data))) 
         else 
-            this.addListener(pattern , stream as Function as (...args: any[]) => void);
-        return stream
+        {
+            var stream = new EventToGenerator()
+            if(untill!=='forever')
+            {
+                this.untill(pattern , untill, stream as Function as (...args: any[]) => void, () => stream(null))
+            }
+            else 
+                this.addListener(pattern , stream as Function as (...args: any[]) => void);
+            return stream
+        }
     }
     /**
      * 
      * @param pattern this pattern will be matched against the sequence object being emitted
      */
-    readSequence(pattern: pattern='object', untill?: pattern ): AsyncIterable<any> {
+    readSequence(pattern: pattern, untill?:Nominal<"once",""> ):Promise<any>
+    readSequence(pattern:pattern,untill:Nominal<"forever","">|pattern): AsyncIterable<any> 
+    readSequence(pattern: pattern, untill: Nominal<"forever","">|Nominal<"once","">|pattern="once" ):Promise<any>|AsyncIterable<any>
+    {
+        if(typeof untill=='object')
+            if("seqid" in untill && untill.seqid <this.#inSeqNumber)console.error("readSequence might be waiting for a message that might never arrive!");
         return this.readPattern(Object.assign(pattern,{type:"sequence"}),untill)
     }
 }
