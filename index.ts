@@ -40,6 +40,10 @@ export class TalkToGdb extends EventEmitterExtended {
     #inSeqNumber: messageCounter
     #process: ChildProcessWithoutNullStreams | execa.ExecaChildProcess
     #parser: GdbParser
+    private gettoken():Nominal<string,"token">
+    {
+        return Math.random().toString().slice(2)
+    }
     constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | { target: string | { file: string, cwd?: string } } = {}) {
         super()
         if ("stdout" in arg) {
@@ -91,8 +95,14 @@ export class TalkToGdb extends EventEmitterExtended {
 
     }
     write(input: string): Promise<messageCounter> {
+        var token=(input.match(/(\d*)-/)||[])[1] as string|undefined
+        if(token==="" )
+        {
+            token=this.gettoken()
+            input=token+input
+        }
         return new Promise((res, rej) => {
-            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Math.max(this.#inSeqNumber, this.#outMsgCounter++)))
+            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)))
         })
     }
     read(pattern?: pattern): AsyncIterable<any> {
