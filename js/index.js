@@ -123,12 +123,6 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
             return stream;
         }
     }
-    readSequence(pattern, untill = "once") {
-        if (typeof untill == 'object')
-            if ("seqid" in untill && untill.seqid < this.#inSeqNumber)
-                console.error("readSequence might be waiting for a message that might never arrive!");
-        return this.readPattern(Object.assign(pattern, { type: "sequence" }), untill);
-    }
 }
 exports.TalkToGdb = TalkToGdb;
 process.on('unhandledRejection', (reason, promise) => {

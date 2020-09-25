@@ -137,18 +137,18 @@ export class TalkToGdb extends EventEmitterExtended {
             return stream
         }
     }
-    /**
-     * 
-     * @param pattern this pattern will be matched against the sequence object being emitted
-     */
-    readSequence(pattern: pattern, untill?:Nominal<"once",""> ):Promise<any>
-    readSequence(pattern:pattern,untill:Nominal<"forever","">|pattern): AsyncIterable<any> 
-    readSequence(pattern: pattern, untill: Nominal<"forever","">|Nominal<"once","">|pattern="once" ):Promise<any>|AsyncIterable<any>
-    {
-        if(typeof untill=='object')
-            if("seqid" in untill && untill.seqid <this.#inSeqNumber)console.error("readSequence might be waiting for a message that might never arrive!");
-        return this.readPattern(Object.assign(pattern,{type:"sequence"}),untill)
-    }
+    // /**
+    //  * 
+    //  * @param pattern this pattern will be matched against the sequence object being emitted
+    //  */
+    // readSequence(pattern: pattern, untill?:Nominal<"once",""> ):Promise<any>
+    // readSequence(pattern:pattern,untill:Nominal<"forever","">|pattern): AsyncIterable<any> 
+    // readSequence(pattern: pattern, untill: Nominal<"forever","">|Nominal<"once","">|pattern="once" ):Promise<any>|AsyncIterable<any>
+    // {
+    //     if(typeof untill=='object')
+    //         if("seqid" in untill && untill.seqid <this.#inSeqNumber)console.error("readSequence might be waiting for a message that might never arrive!");
+    //     return this.readPattern(Object.assign(pattern,{type:"sequence"}),untill)
+    // }
 }
 
 process.on('unhandledRejection', (reason, promise) => {

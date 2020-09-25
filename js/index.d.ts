@@ -37,12 +37,6 @@ export declare class TalkToGdb extends EventEmitterExtended {
     request(input: string): Promise<any>;
     readPattern(pattern: pattern, untill?: Nominal<"once", "">): Promise<any>;
     readPattern(pattern: pattern, untill: Nominal<"forever", ""> | pattern): AsyncIterable<any>;
-    /**
-     *
-     * @param pattern this pattern will be matched against the sequence object being emitted
-     */
-    readSequence(pattern: pattern, untill?: Nominal<"once", "">): Promise<any>;
-    readSequence(pattern: pattern, untill: Nominal<"forever", ""> | pattern): AsyncIterable<any>;
 }
 export {};
 //# sourceMappingURL=index.d.ts.map
