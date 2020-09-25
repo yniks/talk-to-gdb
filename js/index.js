@@ -54,8 +54,28 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         this.on('line', (line) => {
             var miresponse = Object.assign(this.#parser.parseMIrecord(line), { msgid: this.#inMsgCounter++, seqid: this.#inSeqNumber });
             this.emit(miresponse);
+            this.emit('object', miresponse);
         });
         this.addListener({ type: 'sequencebreak' }, () => this.#inSeqNumber++);
+        let sequence = [];
+        let sequenceToken;
+        this.addListener("object", (object) => {
+            if (this.listenerCount("sequence") == 0)
+                return;
+            else if (object.type == 'sequencebreak') {
+                this.emit("sequence", Object.assign({ token: sequenceToken, type: 'sequence', messages: sequence }));
+                sequence = [];
+                sequenceToken = undefined;
+            }
+            else {
+                if (object.token) {
+                    if (typeof sequenceToken == 'undefined')
+                        sequenceToken = object.token;
+                    //else if(object.token!=sequenceToken);console.error("WARM:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
+                }
+                sequence.push(object);
+            }
+        });
         this.#outMsgCounter = this.#inMsgCounter = this.#inSeqNumber = 0;
     }
     #inMsgCounter;

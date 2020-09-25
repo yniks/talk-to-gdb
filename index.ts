@@ -1,101 +1,117 @@
 import execa from "execa"
 import path from "path"
 import { GdbParser } from "gdb-parser-extended"
-import { ChildProcessWithoutNullStreams,ChildProcess } from "child_process"
-import { EventEmitterExtended,pattern } from "listen-for-patterns"
-import {EventToGenerator } from "callback-to-generator"
+import { ChildProcessWithoutNullStreams, ChildProcess } from "child_process"
+import { EventEmitterExtended, pattern } from "listen-for-patterns"
+import { EventToGenerator } from "callback-to-generator"
 /**
  * This Class initiates and loads gdb process.
  * This is required only when the user does not provide a running gdb process in `TalkToGdb` constructor
  */
 interface Flavoring<FlavorT> {
     _type?: FlavorT;
-  }
+}
 export type Nominal<T, FlavorT> = T & Flavoring<FlavorT>;
-type messageCounter=Nominal<number,"messageCounter">
-type sequenceCounter=Nominal<number,"sequenceCounter">
+type messageCounter = Nominal<number, "messageCounter">
+type sequenceCounter = Nominal<number, "sequenceCounter">
 export class GdbInstance {
-    public file: string|undefined
-    public cwd: string|undefined
+    public file: string | undefined
+    public cwd: string | undefined
     public process: execa.ExecaChildProcess
-    constructor(file?: string , cwd?: string) {
-       if (file)
-       {
+    constructor(file?: string, cwd?: string) {
+        if (file) {
             this.file = file
             this.cwd = cwd || path.dirname(file)
             this.process = execa('gdb', ['-q', '-i=mi3', this.file], { cwd: this.cwd })
-       }
-       else if (cwd)
-            {
-                this.cwd = cwd 
-                this.process = execa('gdb', ['-q', '-i=mi3'], { cwd: this.cwd })
-            }
-       else  this.process = execa('gdb', ['-q', '-i=mi3'])
+        }
+        else if (cwd) {
+            this.cwd = cwd
+            this.process = execa('gdb', ['-q', '-i=mi3'], { cwd: this.cwd })
+        }
+        else this.process = execa('gdb', ['-q', '-i=mi3'])
     }
 }
 /**
  * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */
 export class TalkToGdb extends EventEmitterExtended {
-    #inMsgCounter:messageCounter
-    #outMsgCounter:messageCounter
-    #inSeqNumber:messageCounter
-    #process:ChildProcessWithoutNullStreams|execa.ExecaChildProcess
-    #parser:GdbParser
-    constructor(arg: ChildProcessWithoutNullStreams|execa.ExecaChildProcess|{}|{ target:string|{file:string,cwd?:string}}={}) {
-            super()
-            if ("stdout" in arg ){
-                if (!arg.stdout)throw "Need a Child Process with an open stdio stream"
-                this.#process=arg
+    #inMsgCounter: messageCounter
+    #outMsgCounter: messageCounter
+    #inSeqNumber: messageCounter
+    #process: ChildProcessWithoutNullStreams | execa.ExecaChildProcess
+    #parser: GdbParser
+    constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | { target: string | { file: string, cwd?: string } } = {}) {
+        super()
+        if ("stdout" in arg) {
+            if (!arg.stdout) throw "Need a Child Process with an open stdio stream"
+            this.#process = arg
+        }
+        else if ("target" in arg) {
+            if (typeof arg.target == "string")
+                this.#process = new GdbInstance(arg.target).process
+            else this.#process = new GdbInstance(arg.target.file, arg.target.cwd).process
+        }
+        else this.#process = new GdbInstance().process //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
+        this.#parser = new GdbParser
+        var tail = "";
+        this.#process.stdout?.setEncoding("utf-8").on("data", (data: string) => {
+            var lines = (tail + data).split(/([^\n]*?\n)/g)
+            tail = lines.pop() || ""
+            lines.forEach((element) => element && this.emit('line', element));
+        })
+        this.on('line', (line) => {
+            var miresponse = Object.assign(this.#parser.parseMIrecord(line), { msgid: this.#inMsgCounter++, seqid: this.#inSeqNumber })
+            this.emit(miresponse)
+            this.emit('object', miresponse)
+        })
+        this.addListener({ type: 'sequencebreak' }, () => this.#inSeqNumber++)
+        
+        
+        let sequence: Object[] = []
+        let sequenceToken: messageCounter|undefined;
+        this.addListener("object", (object) => {
+            if(this.listenerCount("sequence")==0)return
+            else if (object.type == 'sequencebreak') {
+                this.emit("sequence", Object.assign({ token: sequenceToken,type: 'sequence' , messages:sequence}))
+                sequence=[]
+                sequenceToken=undefined
             }
-            else if("target" in arg )
+            else
             {
-                if (typeof arg.target=="string")
-                    this.#process =new GdbInstance(arg.target).process 
-                else this.#process =new GdbInstance(arg.target.file ,arg.target.cwd).process
+                if(object.token)
+                {
+                    if(typeof sequenceToken=='undefined')
+                        sequenceToken=object.token;
+                    //else if(object.token!=sequenceToken);console.error("WARM:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
+                }
+                sequence.push(object)
             }
-            else  this.#process =new GdbInstance().process //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
-            this.#parser=new GdbParser
-            var tail="";
-            this.#process.stdout?.setEncoding("utf-8").on("data",(data:string)=>
-            {
-                var lines=(tail+data).split(/([^\n]*?\n)/g)
-                tail=lines.pop()||""
-                lines.forEach((element) => element&&this.emit('line',element) );
-            })
-            this.on('line',(line)=>{
-                var miresponse=Object.assign(this.#parser.parseMIrecord(line),{msgid:this.#inMsgCounter++,seqid:this.#inSeqNumber})
-                this.emit(miresponse)
-            })
-            this.addListener({ type:'sequencebreak'},()=>this.#inSeqNumber++)
-            this.#outMsgCounter=this.#inMsgCounter=this.#inSeqNumber=0
+        })
+        this.#outMsgCounter = this.#inMsgCounter = this.#inSeqNumber = 0
+
     }
-    write(input:string):Promise<messageCounter>
-    {       
-           return new Promise((res,rej)=>{
-                this.#process.stdin?.write(input,(error)=>error?rej(error):res(Math.max(this.#inSeqNumber,this.#outMsgCounter++)))
-           })
+    write(input: string): Promise<messageCounter> {
+        return new Promise((res, rej) => {
+            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Math.max(this.#inSeqNumber, this.#outMsgCounter++)))
+        })
     }
-    read(pattern?:pattern):AsyncIterable<any>
-    {
-        var stream=new EventToGenerator() 
-        this.addListener(pattern||'line',stream as Function as (...args: any[]) => void)
+    read(pattern?: pattern): AsyncIterable<any> {
+        var stream = new EventToGenerator()
+        this.addListener(pattern || 'line', stream as Function as (...args: any[]) => void)
         return stream
     }
-    readUntill(pattern?:pattern,untill:pattern={ type:'sequencebreak'}):AsyncIterable<any>
-    {
-        var stream=new EventToGenerator() 
-        this.untill(pattern||'line',untill,stream as Function as (...args: any[]) => void,()=>stream(null))
+    readUntill(pattern?: pattern, untill: pattern = { type: 'sequencebreak' }): AsyncIterable<any> {
+        var stream = new EventToGenerator()
+        this.untill(pattern || 'line', untill, stream as Function as (...args: any[]) => void, () => stream(null))
         return stream
     }
-    readSequence(seq:messageCounter,pattern:pattern={})
-    {
-        return this.readUntill(Object.assign(pattern,{seqid:seq}),{ type:'sequencebreak',seqid:seq})
+    readSequence(seq: messageCounter, pattern: pattern = {}) {
+        return this.readUntill(Object.assign(pattern, { seqid: seq }), { type: 'sequencebreak', seqid: seq })
     }
 }
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.log('Unhandled Rejection at:',  reason)
+    console.log('Unhandled Rejection at:', reason)
     // Recommended: send the information to sentry.io
     // or whatever crash reporting service you use
-  })
+})
