@@ -40,8 +40,7 @@ export class TalkToGdb extends EventEmitterExtended {
     #inSeqNumber: messageCounter
     #process: ChildProcessWithoutNullStreams | execa.ExecaChildProcess
     #parser: GdbParser
-    private gettoken():Nominal<string,"token">
-    {
+    private gettoken(): Nominal<string, "token"> {
         return Math.random().toString().slice(2)
     }
     constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | { target: string | { file: string, cwd?: string } } = {}) {
@@ -59,9 +58,10 @@ export class TalkToGdb extends EventEmitterExtended {
         this.#parser = new GdbParser
         var tail = "";
         this.#process.stdout?.setEncoding("utf-8").on("data", (data: string) => {
-            var lines = (tail + data).split(/([^\n]*?\n)/g)
+            var lines = data.split("\n")
+            lines[0] = tail + lines[0];
             tail = lines.pop() || ""
-            lines.forEach((element) => element && this.emit('line', element));
+            lines.forEach((element) => element && this.emit('line', element + "\n"));
         })
         this.on('line', (line) => {
             var miresponse = Object.assign(this.#parser.parseMIrecord(line), { msgid: this.#inMsgCounter++, seqid: this.#inSeqNumber })
@@ -69,30 +69,28 @@ export class TalkToGdb extends EventEmitterExtended {
             this.emit('object', miresponse)
         })
         this.addListener({ type: 'sequencebreak' }, () => this.#inSeqNumber++)
-        
-        
+
+
         let sequence: Object[] = []
-        let sequenceToken: messageCounter=-1
-        let seqid:messageCounter=-1
+        let sequenceToken: messageCounter = -1
+        let seqid: messageCounter = -1
         this.addListener("object", (object) => {
-            
+
             if (object.type == 'sequencebreak') {
-                var data=Object.assign({ token: sequenceToken,seqid,type: 'sequence' , messages:sequence})
+                var data = Object.assign({ token: sequenceToken, seqid, type: 'sequence', messages: sequence })
                 this.emit(data)
                 this.emit("sequence", data)
-                sequence=[]
-                seqid=-1
-                sequenceToken=-1
+                sequence = []
+                seqid = -1
+                sequenceToken = -1
             }
-            else
-            {
-                if(object.token)
-                {
-                    if(sequenceToken==-1)
-                        sequenceToken=object.token;
+            else {
+                if (object.token) {
+                    if (sequenceToken == -1)
+                        sequenceToken = object.token;
                     //else if(object.token!=sequenceToken);console.error("WARN:some desprecencies in incoming messeage sequence, a signle token is expected in a single sequence")
                 }
-                if(seqid==-1 && "seqid" in object)seqid=object.seqid
+                if (seqid == -1 && "seqid" in object) seqid = object.seqid
                 sequence.push(object)
             }
         })
@@ -104,36 +102,31 @@ export class TalkToGdb extends EventEmitterExtended {
      * @param input gdbmi command
      */
     write(input: string): Promise<messageCounter> {
-        var token=(input.match(/(\d*)-/)||[])[1] as string|undefined
-        if(token==="" )
-        {
-            token=this.gettoken()
-            input=token+input
+        var token = (input.match(/(\d*)-/) || [])[1] as string | undefined
+        if (token === "") {
+            token = this.gettoken()
+            input = token + input
         }
         return new Promise((res, rej) => {
             this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)))
         })
     }
-    async request(input: string):Promise<any>
-    {
-        var token=await this.write(input);
-        return this.readPattern({token,type:(s:string)=>s!='sequence'})
+    async request(input: string): Promise<any> {
+        var token = await this.write(input);
+        return this.readPattern({ token, type: (s: string) => s != 'sequence' })
     }
-    readPattern(pattern: pattern, untill?:Nominal<"once",""> ):Promise<any>
-    readPattern(pattern:pattern,untill:Nominal<"forever","">|pattern): AsyncIterable<any> 
-    readPattern(pattern: pattern, untill: Nominal<"forever","">|Nominal<"once","">|pattern="once" ):Promise<any>|AsyncIterable<any>
-    {
-        if(untill=="once") 
-            return new Promise(res =>this.once(pattern,(data)=>res(data))) 
-        else 
-        {
+    readPattern(pattern: pattern, untill?: Nominal<"once", "">): Promise<any>
+    readPattern(pattern: pattern, untill: Nominal<"forever", ""> | pattern): AsyncIterable<any>
+    readPattern(pattern: pattern, untill: Nominal<"forever", ""> | Nominal<"once", ""> | pattern = "once"): Promise<any> | AsyncIterable<any> {
+        if (untill == "once")
+            return new Promise(res => this.once(pattern, (data) => res(data)))
+        else {
             var stream = new EventToGenerator()
-            if(untill!=='forever')
-            {
-                this.untill(pattern , untill, stream as Function as (...args: any[]) => void, () => stream(null))
+            if (untill !== 'forever') {
+                this.untill(pattern, untill, stream as Function as (...args: any[]) => void, () => stream(null))
             }
-            else 
-                this.addListener(pattern , stream as Function as (...args: any[]) => void);
+            else
+                this.addListener(pattern, stream as Function as (...args: any[]) => void);
             return stream
         }
     }

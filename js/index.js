@@ -47,9 +47,10 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         this.#parser = new gdb_parser_extended_1.GdbParser;
         var tail = "";
         this.#process.stdout?.setEncoding("utf-8").on("data", (data) => {
-            var lines = (tail + data).split(/([^\n]*?\n)/g);
+            var lines = data.split("\n");
+            lines[0] = tail + lines[0];
             tail = lines.pop() || "";
-            lines.forEach((element) => element && this.emit('line', element));
+            lines.forEach((element) => element && this.emit('line', element + "\n"));
         });
         this.on('line', (line) => {
             var miresponse = Object.assign(this.#parser.parseMIrecord(line), { msgid: this.#inMsgCounter++, seqid: this.#inSeqNumber });
