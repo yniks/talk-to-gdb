@@ -93,7 +93,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
     }
     prepareInput(arg) {
-        arg = this.escape(arg);
+        arg = arg.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
         if (arg.startsWith("--"))
             return arg;
         else
@@ -115,7 +115,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
             token = this.gettoken();
             micommand = token + micommand;
         }
-        var command = `${micommand} ${args.join(" ")}`;
+        var command = `${micommand} ${args.join(" ")}\n`;
         await this.write(command);
         return Number(token);
     }
