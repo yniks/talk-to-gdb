@@ -14,6 +14,8 @@ interface Flavoring<FlavorT> {
 export type Nominal<T, FlavorT> = T & Flavoring<FlavorT>;
 type messageCounter = Nominal<number, "messageCounter">
 type sequenceCounter = Nominal<number, "sequenceCounter">
+//FIXME: micommand shall be union of all possible gdb mi comands
+type micommand = Nominal<string, "micommand">
 export class GdbInstance {
     public file: string | undefined
     public cwd: string | undefined
@@ -40,6 +42,14 @@ export class TalkToGdb extends EventEmitterExtended {
     #inSeqNumber: messageCounter
     #process: ChildProcessWithoutNullStreams | execa.ExecaChildProcess
     #parser: GdbParser
+    private escape(str: string) {
+        return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0')
+    }
+    private prepareInput(arg: string) {
+        arg = this.escape(arg)
+        if (arg.startsWith("--")) return arg
+        else return `"${arg}"`
+    }
     private gettoken(): Nominal<string, "token"> {
         return Math.random().toString().slice(2)
     }
@@ -96,6 +106,24 @@ export class TalkToGdb extends EventEmitterExtended {
         })
         this.#outMsgCounter = this.#inMsgCounter = this.#inSeqNumber = 0
 
+    }
+    overloadedMiCommands: string[] = []
+    /**
+     * 
+     * @param micommand A valid gdb mi3 command 
+     * @param args Argumnet strngs, `note`: expected unescaped, unquoted
+     */
+    async command(micommand: string, ...args: string[]): Promise<messageCounter> {
+        this.overloadedMiCommands.includes(micommand);
+        args = args.map(this.prepareInput)
+        var token = (micommand.match(/(\d*)-/) || [])[1] as string | undefined
+        if (token === "") {
+            token = this.gettoken()
+            micommand = token + micommand
+        }
+        var command = `${micommand} ${args.join(" ")}`;
+        await this.write(command)
+        return Number(token)
     }
     /**
      * write to gdb stdin

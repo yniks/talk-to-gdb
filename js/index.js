@@ -31,6 +31,7 @@ exports.GdbInstance = GdbInstance;
 class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     constructor(arg = {}) {
         super();
+        this.overloadedMiCommands = [];
         if ("stdout" in arg) {
             if (!arg.stdout)
                 throw "Need a Child Process with an open stdio stream";
@@ -88,8 +89,35 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     #inSeqNumber;
     #process;
     #parser;
+    escape(str) {
+        return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+    }
+    prepareInput(arg) {
+        arg = this.escape(arg);
+        if (arg.startsWith("--"))
+            return arg;
+        else
+            return `"${arg}"`;
+    }
     gettoken() {
         return Math.random().toString().slice(2);
+    }
+    /**
+     *
+     * @param micommand A valid gdb mi3 command
+     * @param args Argumnet strngs, `note`: expected unescaped, unquoted
+     */
+    async command(micommand, ...args) {
+        this.overloadedMiCommands.includes(micommand);
+        args = args.map(this.prepareInput);
+        var token = (micommand.match(/(\d*)-/) || [])[1];
+        if (token === "") {
+            token = this.gettoken();
+            micommand = token + micommand;
+        }
+        var command = `${micommand} ${args.join(" ")}`;
+        await this.write(command);
+        return Number(token);
     }
     /**
      * write to gdb stdin

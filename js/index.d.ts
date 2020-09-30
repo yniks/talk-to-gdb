@@ -22,6 +22,8 @@ export declare class GdbInstance {
  */
 export declare class TalkToGdb extends EventEmitterExtended {
     #private;
+    private escape;
+    private prepareInput;
     private gettoken;
     constructor(arg?: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | {
         target: string | {
@@ -29,6 +31,13 @@ export declare class TalkToGdb extends EventEmitterExtended {
             cwd?: string;
         };
     });
+    overloadedMiCommands: string[];
+    /**
+     *
+     * @param micommand A valid gdb mi3 command
+     * @param args Argumnet strngs, `note`: expected unescaped, unquoted
+     */
+    command(micommand: string, ...args: string[]): Promise<messageCounter>;
     /**
      * write to gdb stdin
      * @param input gdbmi command
