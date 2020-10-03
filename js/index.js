@@ -45,7 +45,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         }
         else
             this.#process = new GdbInstance().process; //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
-        this.#parser = new gdb_parser_extended_1.GdbParser;
+        this.#parser = gdb_parser_extended_1.GdbParser;
         var tail = "";
         this.#process.stdout?.setEncoding("utf-8").on("data", (data) => {
             var lines = data.split("\n");

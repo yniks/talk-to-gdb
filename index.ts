@@ -41,7 +41,7 @@ export class TalkToGdb extends EventEmitterExtended {
     #outMsgCounter: messageCounter
     #inSeqNumber: messageCounter
     #process: ChildProcessWithoutNullStreams | execa.ExecaChildProcess
-    #parser: GdbParser
+    #parser: typeof GdbParser
     private escape(str: string) {
         return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0')
     }
@@ -65,7 +65,7 @@ export class TalkToGdb extends EventEmitterExtended {
             else this.#process = new GdbInstance(arg.target.file, arg.target.cwd).process
         }
         else this.#process = new GdbInstance().process //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
-        this.#parser = new GdbParser
+        this.#parser = GdbParser
         var tail = "";
         this.#process.stdout?.setEncoding("utf-8").on("data", (data: string) => {
             var lines = data.split("\n")
