@@ -10,7 +10,6 @@ interface Flavoring<FlavorT> {
     _type?: FlavorT;
 }
 export declare type Nominal<T, FlavorT> = T & Flavoring<FlavorT>;
-declare type messageCounter = Nominal<number, "messageCounter">;
 export declare class GdbInstance {
     file: string | undefined;
     cwd: string | undefined;
@@ -23,26 +22,28 @@ export declare class GdbInstance {
 export declare class TalkToGdb extends EventEmitterExtended {
     #private;
     private escape;
-    private prepareInput;
+    prepareInput(arg: string): string;
     private gettoken;
     constructor(arg?: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | {
         target: string | {
             file: string;
             cwd?: string;
         };
-    });
-    overloadedMiCommands: string[];
+    }, plugin?: never[]);
+    overloadedMiCommands: {
+        [key: string]: any;
+    };
     /**
      *
      * @param micommand A valid gdb mi3 command
      * @param args Argumnet strngs, `note`: expected unescaped, unquoted
      */
-    command(micommand: string, ...args: string[]): Promise<messageCounter>;
+    command(micommand: string, ...args: string[]): Promise<string>;
     /**
      * write to gdb stdin
      * @param input gdbmi command
      */
-    write(input: string): Promise<messageCounter>;
+    write(input: string): Promise<string>;
     request(input: string): Promise<any>;
     readPattern(pattern: pattern, untill?: Nominal<"once", "">): Promise<any>;
     readPattern(pattern: pattern, untill: Nominal<"forever", ""> | pattern): AsyncIterable<any>;

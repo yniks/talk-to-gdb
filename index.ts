@@ -4,6 +4,7 @@ import { GdbParser } from "gdb-parser-extended"
 import { ChildProcessWithoutNullStreams, ChildProcess } from "child_process"
 import { EventEmitterExtended, pattern } from "listen-for-patterns"
 import { EventToGenerator } from "callback-to-generator"
+import plugins from "./defaultplugins"
 /**
  * This Class initiates and loads gdb process.
  * This is required only when the user does not provide a running gdb process in `TalkToGdb` constructor
@@ -45,7 +46,7 @@ export class TalkToGdb extends EventEmitterExtended {
     private escape(str: string) {
         return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0')
     }
-    private prepareInput(arg: string) {
+    prepareInput(arg: string) {
         arg = arg.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0')
         if (arg.startsWith("--")) return arg
         else return `"${arg}"`
@@ -53,7 +54,7 @@ export class TalkToGdb extends EventEmitterExtended {
     private gettoken(): Nominal<string, "token"> {
         return Math.random().toString().slice(2)
     }
-    constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | { target: string | { file: string, cwd?: string } } = {}, plugins = {}) {
+    constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | { target: string | { file: string, cwd?: string } } = {}, plugin = []) {
         super()
         if ("stdout" in arg) {
             if (!arg.stdout) throw "Need a Child Process with an open stdio stream"
@@ -67,7 +68,11 @@ export class TalkToGdb extends EventEmitterExtended {
         else this.#process = new GdbInstance().process //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
         this.#parser = GdbParser
         var tail = "";
-        this.overloadedMiCommands = plugins;
+        plugins.concat(plugin)
+            .map(plugin => new plugin({ target: this }))
+            .forEach(async plugin => (await plugin.init())
+                .forEach(command => this.overloadedMiCommands[command] = plugin))
+        this.overloadedMiCommands = {};
         this.#process.stdout?.setEncoding("utf-8").on("data", (data: string) => {
             var lines = data.split("\n")
             lines[0] = tail + lines[0];
@@ -80,7 +85,6 @@ export class TalkToGdb extends EventEmitterExtended {
             this.emit('object', miresponse)
         })
         this.addListener({ type: 'sequencebreak' }, () => this.#inSeqNumber++)
-
 
         let sequence: Object[] = []
         let sequenceToken: messageCounter = -1
@@ -108,7 +112,7 @@ export class TalkToGdb extends EventEmitterExtended {
         this.#outMsgCounter = this.#inMsgCounter = this.#inSeqNumber = 0
 
     }
-    overloadedMiCommands: { [key: string]: Function } = {}
+    overloadedMiCommands: { [key: string]: any } = {}
     /**
      * 
      * @param micommand A valid gdb mi3 command 
@@ -116,7 +120,7 @@ export class TalkToGdb extends EventEmitterExtended {
      */
     async command(micommand: string, ...args: string[]): Promise<string> {
         if (micommand in this.overloadedMiCommands) {
-            return this.overloadedMiCommands[micommand](micommand, ...args)
+            return this.overloadedMiCommands[micommand].exec(micommand, ...args)
         };
         args = args.map(this.prepareInput)
         var token = (micommand.match(/(\d*)-/) || [])[1] as string | undefined
@@ -132,19 +136,19 @@ export class TalkToGdb extends EventEmitterExtended {
      * write to gdb stdin
      * @param input gdbmi command
      */
-    write(input: string): Promise<messageCounter> {
+    write(input: string): Promise<string> {
         var token = (input.match(/(\d*)-/) || [])[1] as string | undefined
         if (token === "") {
             token = this.gettoken()
             input = token + input
         }
         return new Promise((res, rej) => {
-            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)))
+            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(token))
         })
     }
     async request(input: string): Promise<any> {
         var token = await this.write(input);
-        return this.readPattern({ token, type: (s: string) => s != 'sequence' })
+        return this.readPattern({ token, type: 'result_record' })
     }
     readPattern(pattern: pattern, untill?: Nominal<"once", "">): Promise<any>
     readPattern(pattern: pattern, untill: Nominal<"forever", ""> | pattern): AsyncIterable<any>

@@ -9,6 +9,7 @@ const path_1 = __importDefault(require("path"));
 const gdb_parser_extended_1 = require("gdb-parser-extended");
 const listen_for_patterns_1 = require("listen-for-patterns");
 const callback_to_generator_1 = require("callback-to-generator");
+const defaultplugins_1 = __importDefault(require("./defaultplugins"));
 class GdbInstance {
     constructor(file, cwd) {
         if (file) {
@@ -29,9 +30,9 @@ exports.GdbInstance = GdbInstance;
  * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */
 class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
-    constructor(arg = {}) {
+    constructor(arg = {}, plugin = []) {
         super();
-        this.overloadedMiCommands = [];
+        this.overloadedMiCommands = {};
         if ("stdout" in arg) {
             if (!arg.stdout)
                 throw "Need a Child Process with an open stdio stream";
@@ -47,6 +48,11 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
             this.#process = new GdbInstance().process; //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
         this.#parser = gdb_parser_extended_1.GdbParser;
         var tail = "";
+        defaultplugins_1.default.concat(plugin)
+            .map(plugin => new plugin({ target: this }))
+            .forEach(async (plugin) => (await plugin.init())
+            .forEach(command => this.overloadedMiCommands[command] = plugin));
+        this.overloadedMiCommands = {};
         this.#process.stdout?.setEncoding("utf-8").on("data", (data) => {
             var lines = data.split("\n");
             lines[0] = tail + lines[0];
@@ -108,7 +114,10 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
      * @param args Argumnet strngs, `note`: expected unescaped, unquoted
      */
     async command(micommand, ...args) {
-        this.overloadedMiCommands.includes(micommand);
+        if (micommand in this.overloadedMiCommands) {
+            return this.overloadedMiCommands[micommand].exec(micommand, ...args);
+        }
+        ;
         args = args.map(this.prepareInput);
         var token = (micommand.match(/(\d*)-/) || [])[1];
         if (token === "") {
@@ -117,7 +126,7 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
         }
         var command = `${micommand} ${args.join(" ")}\n`;
         await this.write(command);
-        return Number(token);
+        return token || "";
     }
     /**
      * write to gdb stdin
@@ -130,12 +139,12 @@ class TalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
             input = token + input;
         }
         return new Promise((res, rej) => {
-            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(Number(token)));
+            this.#process.stdin?.write(input, (error) => error ? rej(error) : res(token));
         });
     }
     async request(input) {
         var token = await this.write(input);
-        return this.readPattern({ token, type: (s) => s != 'sequence' });
+        return this.readPattern({ token, type: 'result_record' });
     }
     readPattern(pattern, untill = "once") {
         if (untill == "once")
