@@ -53,7 +53,7 @@ export class TalkToGdb extends EventEmitterExtended {
     private gettoken(): Nominal<string, "token"> {
         return Math.random().toString().slice(2)
     }
-    constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | { target: string | { file: string, cwd?: string } } = {}) {
+    constructor(arg: ChildProcessWithoutNullStreams | execa.ExecaChildProcess | {} | { target: string | { file: string, cwd?: string } } = {}, plugins = {}) {
         super()
         if ("stdout" in arg) {
             if (!arg.stdout) throw "Need a Child Process with an open stdio stream"
@@ -67,6 +67,7 @@ export class TalkToGdb extends EventEmitterExtended {
         else this.#process = new GdbInstance().process //throw "TalkToGdb Class needs to initialized by either a running gdb ChildProcess or a file path which the can be compiled"
         this.#parser = GdbParser
         var tail = "";
+        this.overloadedMiCommands = plugins;
         this.#process.stdout?.setEncoding("utf-8").on("data", (data: string) => {
             var lines = data.split("\n")
             lines[0] = tail + lines[0];
@@ -107,14 +108,16 @@ export class TalkToGdb extends EventEmitterExtended {
         this.#outMsgCounter = this.#inMsgCounter = this.#inSeqNumber = 0
 
     }
-    overloadedMiCommands: string[] = []
+    overloadedMiCommands: { [key: string]: Function } = {}
     /**
      * 
      * @param micommand A valid gdb mi3 command 
      * @param args Argumnet strngs, `note`: expected unescaped, unquoted
      */
-    async command(micommand: string, ...args: string[]): Promise<messageCounter> {
-        this.overloadedMiCommands.includes(micommand);
+    async command(micommand: string, ...args: string[]): Promise<string> {
+        if (micommand in this.overloadedMiCommands) {
+            return this.overloadedMiCommands[micommand](micommand, ...args)
+        };
         args = args.map(this.prepareInput)
         var token = (micommand.match(/(\d*)-/) || [])[1] as string | undefined
         if (token === "") {
@@ -123,7 +126,7 @@ export class TalkToGdb extends EventEmitterExtended {
         }
         var command = `${micommand} ${args.join(" ")}\n`;
         await this.write(command)
-        return Number(token)
+        return token || ""
     }
     /**
      * write to gdb stdin
