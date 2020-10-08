@@ -16,8 +16,8 @@ export class BaseTalkToGdb extends EventEmitterExtended {
     #process: ChildProcessWithoutNullStreams;
     #parser: typeof GdbParser;
     plugins: { [command: string]: BasePlugin; };
-    async loadPlugins(pluginClasses: BasePlugin & { new(...args: any[]): BasePlugin; }[]) {
-        var plugins = pluginClasses.concat(defaultPlugins).map(plugin => new plugin({ target: this, parser: this.#parser }));
+    async loadPlugins(pluginClasses: (BasePlugin & { new(...args: any[]): BasePlugin; })[] = []) {
+        var plugins = pluginClasses.concat(defaultPlugins as (BasePlugin & { new(...args: any[]): BasePlugin; })[]).map(plugin => new plugin({ target: this, parser: this.#parser }));
         for (let plugin of plugins) {
             var commands = await plugin.init();
             commands.forEach((command: string) => this.plugins[command] = plugin);

@@ -10,9 +10,9 @@ export declare class BaseTalkToGdb extends EventEmitterExtended {
     plugins: {
         [command: string]: BasePlugin;
     };
-    loadPlugins(pluginClasses: BasePlugin & {
+    loadPlugins(pluginClasses?: (BasePlugin & {
         new (...args: any[]): BasePlugin;
-    }[]): Promise<void>;
+    })[]): Promise<void>;
     private initlializeBaseListener;
     constructor(arg?: ChildProcessWithoutNullStreams | {
         file?: string;

@@ -29,7 +29,7 @@ class BaseTalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
     #inSeqNumber;
     #process;
     #parser;
-    async loadPlugins(pluginClasses) {
+    async loadPlugins(pluginClasses = []) {
         var plugins = pluginClasses.concat(defaultplugins_1.default).map(plugin => new plugin({ target: this, parser: this.#parser }));
         for (let plugin of plugins) {
             var commands = await plugin.init();
