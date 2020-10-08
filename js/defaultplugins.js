@@ -1,14 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-class Ptypes {
-    constructor({ target }) {
-        this.target = target;
-    }
-    gettoken() {
-        return Math.random().toString().slice(2);
-    }
+const BasePlugin_1 = require("./BasePlugin");
+const util_1 = require("./util");
+class Ptypes extends BasePlugin_1.BasePlugin {
     async init() {
-        var data = await this.target.request(`define ptypes
+        try {
+            await this.target.waitFor(`define ptypes
     set $i = 0
     while $i < $argc
         eval "set $s=$arg%d",$i
@@ -17,16 +14,28 @@ class Ptypes {
     end
 end
 `);
-        if (data.class !== 'done')
-            throw "Intialization failed";
-        return ["-symbol-info-type"];
+        }
+        catch (e) {
+            console.error("Initilization of plugin failed!");
+            return [];
+        }
+        return ["symbol-info-type"];
     }
-    exec(command, ...args) {
-        var realtoken = this.gettoken();
-        this.target.command(realtoken + "-interpreter-exec console", `ptypes ${args.map(this.target.prepareInput).join(" ")}`)
+    command(command, ...args) {
+        var realtoken = util_1.gettoken();
+        this.target.command(realtoken + "-interpreter-exec console", `ptypes ${args.map(util_1.prepareInput).join(" ")}`)
             .then((realtoken) => this.target.readPattern({ token: realtoken, type: "sequence" }))
-            .then(sequence => this.target.emit(Object.assign(sequence, { token: realtoken + 0 })));
-        return realtoken + 0;
+            .then(sequence => {
+            var types = sequence.messages
+                .filter((m) => m.type == "console_stream_output")
+                .reduce((prev, curr) => prev + curr.c_line, "");
+            var result = {
+                token: realtoken + "00000000",
+                types: types.split("type = ") //GdbParser.consoleParsePtypes(statements)
+            };
+            this.finishSuccess(result);
+        });
+        return realtoken + "00000000";
     }
 }
 exports.default = [Ptypes];
