@@ -1,7 +1,35 @@
 import { BasePlugin } from "./BasePlugin";
-import { gettoken, prepareInput } from "./util";
-
+import { getoraddtoken, gettoken, prepareInput } from "./util";
+import { GdbParser } from "gdb-parser-extended"
 type commands = "-symbol-info-type"
+class ConsoleTypes extends BasePlugin {
+    async init() {
+        return ["symbol-info-types2"]
+    }
+    command(command: commands, ...args: string[]): string {
+        var { token: realtoken } = getoraddtoken(command)
+        this.target.command(realtoken + "0000000-interpreter-exec console", `info types`)
+            .then((realtoken) => this.target.readPattern({ token: realtoken, type: "sequence" }))
+            .then(async sequence => {
+                var types = sequence.messages
+                    .filter((m: any) => m.type == "console_stream_output")
+                    .reduce((prev: any, curr: any) => prev + curr.c_line, "")
+                var types = GdbParser.consoleParseTypes(types.slice(20)).map((file: any) => file.types).flat()
+                var extra = types.filter((type: string) => !type.startsWith("typedef ")).map((type: any) => type.type)
+                this.target.command(`${realtoken}111-symbol-info-type`, ...extra)
+                var sequence = await this.target.readPattern({ token: realtoken + "111", type: "sequence" })
+                for (var i in types) {
+                    if (!types[i].startsWith("typedef ")) types[i] = sequence.messages.types.shift();
+                }
+                var result = {
+                    token: realtoken,
+                    types
+                }
+                this.finishSuccess(result)
+            })
+        return realtoken;
+    }
+}
 class Ptypes extends BasePlugin {
     async init() {
         try {
@@ -22,21 +50,21 @@ end
         return ["symbol-info-type"]
     }
     command(command: commands, ...args: string[]): string {
-        var realtoken = gettoken()
-        this.target.command(realtoken + "-interpreter-exec console", `ptypes ${args.map(prepareInput).join(" ")}`)
+        var { token: realtoken } = getoraddtoken(command)
+        this.target.command(realtoken + "0000000-interpreter-exec console", `ptypes ${args.map(prepareInput).join(" ")}`)
             .then((realtoken) => this.target.readPattern({ token: realtoken, type: "sequence" }))
             .then(sequence => {
                 var types = sequence.messages
                     .filter((m: any) => m.type == "console_stream_output")
                     .reduce((prev: any, curr: any) => prev + curr.c_line, "")
                 var result = {
-                    token: realtoken + "00000000",
-                    types: types.split("type = ")//GdbParser.consoleParsePtypes(statements)
+                    token: realtoken,
+                    types: types.split("type = ")
                 }
                 this.finishSuccess(result)
             })
-        return realtoken + "00000000";
+        return realtoken;
     }
 }
 
-export default [Ptypes]
+export default [Ptypes, ConsoleTypes]
