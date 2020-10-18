@@ -5,7 +5,7 @@ const BaseTalkToGdb_1 = require("./BaseTalkToGdb");
 class TalktoGdb extends BaseTalkToGdb_1.BaseTalkToGdb {
     async waitFor(micommand, ...args) {
         var result = await this.getResult(micommand, ...args);
-        if (result.class !== 'done')
+        if (result.class === 'error')
             throw "command Failed: " + micommand;
         else
             return true;

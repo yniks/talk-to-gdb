@@ -2,7 +2,7 @@ import { BaseTalkToGdb } from "./BaseTalkToGdb";
 export class TalktoGdb extends BaseTalkToGdb {
     async waitFor(micommand: string, ...args: string[]) {
         var result = await this.getResult(micommand, ...args)
-        if (result.class !== 'done')
+        if (result.class === 'error')
             throw "command Failed: " + micommand
         else return true
     }
