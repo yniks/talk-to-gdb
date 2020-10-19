@@ -61,7 +61,7 @@ end
                 .reduce((prev, curr) => prev + curr.c_line, "");
             var result = {
                 token: realtoken,
-                types: types.split("type = ").filter((type) => type)
+                types: types.split("type = ").filter((type) => type),
             };
             this.finishSuccess(result);
         });
