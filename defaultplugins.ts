@@ -6,6 +6,27 @@ class ConsoleTypes extends BasePlugin {
     async init() {
         return ["symbol-info-types2"]
     }
+    fixtypdef(s: string) {
+        if (s.startsWith("typedef typedef")) return ''
+        var namei, i = s.length;
+        while ((i + 1) && s[i] != " ") i--;
+        if (!(i + 1)) return s;
+        namei = i;
+        i--;
+        if (s[i] != ")") return s;
+        var stack: (")" | "(")[] = [")"];
+        i--;
+        while ((i + 1) && stack.length > 0) {
+            if (s[i] == ")") stack.push(")")
+            else if (s[i] == "(") stack.pop()
+            i--;
+        }
+        if (s[i] == ")") i--;
+        if (!stack.length)
+            return `${s.slice(0, i + 1)}${s.slice(namei)}${s.slice(i + 1, namei - 1)})`
+        else return s;
+
+    }
     command(command: commands, ...args: string[]): string {
         var { token: realtoken } = getoraddtoken(command)
         this.target.command(realtoken + "0000000-interpreter-exec console", `info types`)
@@ -20,6 +41,7 @@ class ConsoleTypes extends BasePlugin {
                 var sequence = await this.target.readPattern({ token: realtoken + "111", type: "result_record" })
                 for (var i in types) {
                     if (!types[i].startsWith("typedef ")) types[i] = sequence.types.shift();
+                    else types[i] = this.fixtypdef(types[i])
                 }
                 var result = {
                     token: realtoken,
