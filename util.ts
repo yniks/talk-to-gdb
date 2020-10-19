@@ -21,6 +21,17 @@ export function getWithoutToken(fullcommand: string) {
     if (command) return command
     else return fullcommand
 }
+export function parseArg(args: string[]): { [key: string]: string | boolean } {
+    var arg: any = {};
+    for (let i = 0; i < args.length; i++) {
+        if (args[i].startsWith("--")) {
+            arg[args[i].slice(2)] = args[i + 1];
+            i++;
+        }
+        else arg[args[i]] = true;
+    }
+    return arg
+}
 export function getoraddtoken(command: string) {
     var result = command.match(/^(\d*)-(.*)/)
     if (result) {

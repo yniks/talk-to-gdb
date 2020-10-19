@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getoraddtoken = exports.getWithoutToken = exports.gettoken = exports.prepareInput = exports.escapeCommadArg = void 0;
+exports.getoraddtoken = exports.parseArg = exports.getWithoutToken = exports.gettoken = exports.prepareInput = exports.escapeCommadArg = void 0;
 function escapeCommadArg(str) {
     return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
 }
@@ -32,6 +32,19 @@ function getWithoutToken(fullcommand) {
         return fullcommand;
 }
 exports.getWithoutToken = getWithoutToken;
+function parseArg(args) {
+    var arg = {};
+    for (let i = 0; i < args.length; i++) {
+        if (args[i].startsWith("--")) {
+            arg[args[i].slice(2)] = args[i + 1];
+            i++;
+        }
+        else
+            arg[args[i]] = true;
+    }
+    return arg;
+}
+exports.parseArg = parseArg;
 function getoraddtoken(command) {
     var result = command.match(/^(\d*)-(.*)/);
     if (result) {

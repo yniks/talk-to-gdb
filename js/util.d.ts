@@ -9,6 +9,9 @@ export declare function gettoken(): string;
  * @param command mi command
  */
 export declare function getWithoutToken(fullcommand: string): string;
+export declare function parseArg(args: string[]): {
+    [key: string]: string | boolean;
+};
 export declare function getoraddtoken(command: string): {
     token: string;
     command: string;
