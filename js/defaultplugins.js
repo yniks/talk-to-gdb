@@ -18,10 +18,10 @@ class ConsoleTypes extends BasePlugin_1.BasePlugin {
             var types = gdb_parser_extended_1.GdbParser.consoleParseTypes(types.slice(20)).map((file) => file.types.map((type) => type.type)).flat();
             var extra = types.filter((type) => !type.startsWith("typedef "));
             this.target.command(`${realtoken}111-symbol-info-type`, ...extra);
-            var sequence = await this.target.readPattern({ token: realtoken + "111", type: "sequence" });
+            var sequence = await this.target.readPattern({ token: realtoken + "111", type: "result_record" });
             for (var i in types) {
                 if (!types[i].startsWith("typedef "))
-                    types[i] = sequence.messages.types.shift();
+                    types[i] = sequence.types.shift();
             }
             var result = {
                 token: realtoken,
@@ -61,7 +61,7 @@ end
                 .reduce((prev, curr) => prev + curr.c_line, "");
             var result = {
                 token: realtoken,
-                types: types.split("type = ")
+                types: types.split("type = ").filter((type) => type)
             };
             this.finishSuccess(result);
         });
