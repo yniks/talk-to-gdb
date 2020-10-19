@@ -59,7 +59,7 @@ end
                     .reduce((prev: any, curr: any) => prev + curr.c_line, "")
                 var result = {
                     token: realtoken,
-                    types: types.split("type = ")
+                    types: types.split("type = ").filter(type => type)
                 }
                 this.finishSuccess(result)
             })
