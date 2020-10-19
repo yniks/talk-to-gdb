@@ -2,66 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const BasePlugin_1 = require("./BasePlugin");
 const util_1 = require("./util");
-const gdb_parser_extended_1 = require("gdb-parser-extended");
-class ConsoleTypes extends BasePlugin_1.BasePlugin {
-    async init() {
-        return ["symbol-info-types2"];
-    }
-    fixtypdef(s) {
-        if (s.startsWith("typedef typedef"))
-            return '';
-        var namei, i = s.length;
-        while ((i + 1) && s[i] != " ")
-            i--;
-        if (!(i + 1))
-            return s;
-        namei = i;
-        i--;
-        if (s[i] != ")")
-            return s;
-        var stack = [")"];
-        i--;
-        while ((i + 1) && stack.length > 0) {
-            if (s[i] == ")")
-                stack.push(")");
-            else if (s[i] == "(")
-                stack.pop();
-            i--;
-        }
-        if (s[i] == ")")
-            i--;
-        if (!stack.length)
-            return `${s.slice(0, i + 1)}${s.slice(namei)}${s.slice(i + 1, namei - 1)})`;
-        else
-            return s;
-    }
-    command(command, ...args) {
-        var { token: realtoken } = util_1.getoraddtoken(command);
-        this.target.command(realtoken + "0000000-interpreter-exec console", `info types`)
-            .then((realtoken) => this.target.readPattern({ token: realtoken, type: "sequence" }))
-            .then(async (sequence) => {
-            var types = sequence.messages
-                .filter((m) => m.type == "console_stream_output")
-                .reduce((prev, curr) => prev + curr.c_line, "");
-            var types = gdb_parser_extended_1.GdbParser.consoleParseTypes(types.slice(20)).map((file) => file.types.map((type) => type.type)).flat();
-            var extra = types.filter((type) => !type.startsWith("typedef "));
-            this.target.command(`${realtoken}111-symbol-info-type`, ...extra);
-            var sequence = await this.target.readPattern({ token: realtoken + "111", type: "result_record" });
-            for (var i in types) {
-                if (!types[i].startsWith("typedef "))
-                    types[i] = sequence.types.shift();
-                else
-                    types[i] = this.fixtypdef(types[i]);
-            }
-            var result = {
-                token: realtoken,
-                types
-            };
-            this.finishSuccess(result);
-        });
-        return realtoken;
-    }
-}
 class Ptypes extends BasePlugin_1.BasePlugin {
     async init() {
         try {
@@ -98,5 +38,5 @@ end
         return realtoken;
     }
 }
-exports.default = [Ptypes, ConsoleTypes];
+exports.default = [Ptypes];
 //# sourceMappingURL=defaultplugins.js.map
