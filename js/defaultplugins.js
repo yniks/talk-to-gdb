@@ -16,7 +16,7 @@ class ConsoleTypes extends BasePlugin_1.BasePlugin {
                 .filter((m) => m.type == "console_stream_output")
                 .reduce((prev, curr) => prev + curr.c_line, "");
             var types = gdb_parser_extended_1.GdbParser.consoleParseTypes(types.slice(20)).map((file) => file.types.map((type) => type.type)).flat();
-            var extra = types.filter((type) => !type.startsWith("typedef ")).map((type) => type.type);
+            var extra = types.filter((type) => !type.startsWith("typedef "));
             this.target.command(`${realtoken}111-symbol-info-type`, ...extra);
             var sequence = await this.target.readPattern({ token: realtoken + "111", type: "sequence" });
             for (var i in types) {
