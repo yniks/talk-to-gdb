@@ -17,9 +17,9 @@ class ConsoleTypes extends BasePlugin {
                 var types = GdbParser.consoleParseTypes(types.slice(20)).map((file: any) => file.types.map((type: any) => type.type)).flat()
                 var extra = types.filter((type: string) => !type.startsWith("typedef "))
                 this.target.command(`${realtoken}111-symbol-info-type`, ...extra)
-                var sequence = await this.target.readPattern({ token: realtoken + "111", type: "sequence" })
+                var sequence = await this.target.readPattern({ token: realtoken + "111", type: "result_record" })
                 for (var i in types) {
-                    if (!types[i].startsWith("typedef ")) types[i] = sequence.messages.types.shift();
+                    if (!types[i].startsWith("typedef ")) types[i] = sequence.types.shift();
                 }
                 var result = {
                     token: realtoken,
@@ -59,7 +59,7 @@ end
                     .reduce((prev: any, curr: any) => prev + curr.c_line, "")
                 var result = {
                     token: realtoken,
-                    types: types.split("type = ").filter(type => type)
+                    types: types.split("type = ").filter((type: any) => type)
                 }
                 this.finishSuccess(result)
             })
