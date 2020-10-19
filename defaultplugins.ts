@@ -22,7 +22,7 @@ end
         }
         return ["symbol-info-type"]
     }
-    command(command: commands, ...args: string[]): string {
+    async command(command: commands, ...args: string[]): Promise<string> {
         var { token: realtoken } = getoraddtoken(command)
         this.target.command(realtoken + "0000000-interpreter-exec console", `ptypes ${args.map(prepareInput).join(" ")}`)
             .then((realtoken) => this.target.readPattern({ token: realtoken, type: "sequence" }))

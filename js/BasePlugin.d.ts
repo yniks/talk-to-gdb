@@ -19,7 +19,7 @@ export declare abstract class BasePlugin {
      * @param args list of argument for this command
      * @returns token for user
      */
-    abstract command(command: string, ...args: string[]): string;
+    abstract command(command: string, ...args: string[]): Promise<string>;
     finishSuccess(object?: {}): void;
     finishFailure(object?: {}): void;
     /**
