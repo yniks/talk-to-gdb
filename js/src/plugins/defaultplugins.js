@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const BasePlugin_1 = require("./BasePlugin");
-const util_1 = require("./util");
+const util_1 = require("../lib/util");
 class Ptypes extends BasePlugin_1.BasePlugin {
     async init() {
         try {

@@ -1,5 +1,5 @@
 import { GdbParser } from "gdb-parser-extended";
-import { TalktoGdb } from ".";
+import { TalktoGdb } from "../..";
 export declare abstract class BasePlugin {
     target: TalktoGdb;
     parser: typeof GdbParser;

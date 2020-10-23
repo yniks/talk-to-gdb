@@ -7,8 +7,8 @@ exports.BaseTalkToGdb = void 0;
 const gdb_parser_extended_1 = require("gdb-parser-extended");
 const listen_for_patterns_1 = require("listen-for-patterns");
 const callback_to_generator_1 = require("callback-to-generator");
-const defaultplugins_1 = __importDefault(require("./defaultplugins"));
-const GdbInstance_1 = require("./GdbInstance");
+const defaultplugins_1 = __importDefault(require("../plugins/defaultplugins"));
+const GdbInstance_1 = require("../gdb/GdbInstance");
 const util_1 = require("./util");
 /**
  * Primary Class which implements mechanisms to initiate, and communicate with gdb

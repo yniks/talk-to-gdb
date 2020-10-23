@@ -2,9 +2,9 @@ import { GdbParser } from "gdb-parser-extended";
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { EventEmitterExtended, pattern } from "listen-for-patterns";
 import { EventToGenerator } from "callback-to-generator";
-import defaultPlugins from "./defaultplugins";
-import { BasePlugin } from "./BasePlugin";
-import { GdbInstance } from "./GdbInstance";
+import defaultPlugins from "../plugins/defaultplugins";
+import { BasePlugin } from "../plugins/BasePlugin";
+import { GdbInstance } from "../gdb/GdbInstance";
 import { getoraddtoken, prepareInput } from "./util";
 
 /**

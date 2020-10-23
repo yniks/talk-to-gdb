@@ -1,8 +1,4 @@
-interface Flavoring<FlavorT> {
-    _type?: FlavorT;
-}
-export declare type Nominal<T, FlavorT> = T & Flavoring<FlavorT>;
-export { TalktoGdb } from "./TalktoGdb";
-export * from "./util";
-export * from "./BasePlugin";
+export * from "./src/lib/util";
+export * from "./src/plugins/BasePlugin";
+export * from "./src/lib/TalktoGdb";
 //# sourceMappingURL=index.d.ts.map

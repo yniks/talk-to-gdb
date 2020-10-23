@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { EventEmitterExtended, pattern } from "listen-for-patterns";
-import { BasePlugin } from "./BasePlugin";
+import { BasePlugin } from "../plugins/BasePlugin";
 /**
  * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */

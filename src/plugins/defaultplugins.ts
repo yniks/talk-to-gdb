@@ -1,5 +1,5 @@
 import { BasePlugin } from "./BasePlugin";
-import { getoraddtoken, gettoken, prepareInput } from "./util";
+import { getoraddtoken, gettoken, prepareInput } from "../lib/util";
 import { GdbParser } from "gdb-parser-extended"
 type commands = "-symbol-info-type"
 
