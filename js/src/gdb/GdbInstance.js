@@ -7,6 +7,9 @@ exports.GdbInstance = void 0;
 const execa_1 = __importDefault(require("execa"));
 const path_1 = __importDefault(require("path"));
 class GdbInstance {
+    file;
+    cwd;
+    process;
     constructor(file = "", cwd = "", mi = "mi3") {
         this.cwd = cwd || path_1.default.dirname(file || "");
         this.file = file;

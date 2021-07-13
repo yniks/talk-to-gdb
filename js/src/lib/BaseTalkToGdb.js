@@ -14,21 +14,11 @@ const util_1 = require("./util");
  * Primary Class which implements mechanisms to initiate, and communicate with gdb
  */
 class BaseTalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
-    constructor(arg = {}) {
-        super();
-        if ("stdout" in arg)
-            this.#process = arg;
-        else
-            this.#process = new GdbInstance_1.GdbInstance(arg.file, arg.cwd).process;
-        this.#parser = gdb_parser_extended_1.GdbParser;
-        this.plugins = {};
-        this.#inMsgCounter = this.#inSeqNumber = 0;
-        this.initlializeBaseListener();
-    }
     #inMsgCounter;
     #inSeqNumber;
     #process;
     #parser;
+    plugins;
     async loadPlugins(pluginClasses = []) {
         var plugins = pluginClasses.concat(defaultplugins_1.default).map(plugin => new plugin({ target: this, parser: this.#parser }));
         for (let plugin of plugins) {
@@ -82,6 +72,17 @@ class BaseTalkToGdb extends listen_for_patterns_1.EventEmitterExtended {
                 sequence.push(object);
             }
         });
+    }
+    constructor(arg = {}) {
+        super();
+        if ("stdout" in arg)
+            this.#process = arg;
+        else
+            this.#process = new GdbInstance_1.GdbInstance(arg.file, arg.cwd).process;
+        this.#parser = gdb_parser_extended_1.GdbParser;
+        this.plugins = {};
+        this.#inMsgCounter = this.#inSeqNumber = 0;
+        this.initlializeBaseListener();
     }
     /**
      *

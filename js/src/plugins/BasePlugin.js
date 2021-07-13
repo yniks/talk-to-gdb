@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BasePlugin = void 0;
 class BasePlugin {
+    target;
+    parser;
     constructor({ target, parser }) {
         this.target = target;
         this.parser = parser;

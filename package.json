@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "repl": "node --experimental-repl-await --inspect=0.0.0.0",
-    "docify": "typedoc --out docs  --theme node_modules/typedoc-clarity-theme/bin"
+    "docify": "typedoc --out docs  --theme node_modules/typedoc-clarity-theme/bin",
+    "postinstall": "npx tsc"
   },
   "author": "",
   "license": "ISC",
@@ -15,7 +16,8 @@
     "callback-to-generator": "git+https://github.com/yniks/callback-to-generator.git",
     "execa": "^4.0.3",
     "gdb-parser-extended": "git+ssh://git@github.com/yniks/gdb-parser-extended.git",
-    "listen-for-patterns": "git+ssh://git@github.com/yniks/listen-for-patterns.git"
+    "listen-for-patterns": "git+ssh://git@github.com/yniks/listen-for-patterns.git",
+    "typescript": "^4.3.5"
   },
   "devDependencies": {
     "@babel/types": "^7.11.5",
